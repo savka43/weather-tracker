@@ -1,0 +1,19 @@
+.page-placeholder {
+    width: 100%;
+    max-width: 860px;
+}
+
+.page-placeholder h1 {
+    color: var(--text-h);
+    font-size: 40px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.page-placeholder p {
+    margin-top: 14px;
+    max-width: 560px;
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 1.6;
+}

@@ -1,0 +1,75 @@
+.aside {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 24px 14px;
+    min-height: 100vh;
+    width: 280px;
+    flex-shrink: 0;
+    background-color: var(--dark-blue);
+    border-right: 1px solid var(--color-input-line);
+    gap: 32px;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 10px;
+    color: var(--text-h);
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.hide-sidebar-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    border-radius: 8px;
+    transition: color var(--transition-duration), background-color var(--transition-duration);
+}
+
+.hide-sidebar-button:hover {
+    color: var(--text-h);
+    background-color: var(--color-hover);
+}
+
+
+.sidebar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 38px;
+    padding: 0 12px;
+    color: var(--text-muted);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: left;
+    text-decoration: none;
+    transition: color 0.2s, background-color 0.2s;
+}
+
+.sidebar-item:hover {
+    color: var(--text-h);
+    background-color: var(--color-hover);
+}
+
+.sidebar-item-active {
+    color: var(--text-h);
+    background-color: var(--color-hover);
+}
