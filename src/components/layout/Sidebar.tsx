@@ -1,40 +1,50 @@
+import { useState } from "react"
+import { BarChart3, CloudSun, History, PanelLeftClose, PanelLeftOpen, Search, Settings } from "lucide-react"
 import { NavLink } from "react-router-dom"
 import "./Sidebar.css"
 
+const sidebarItems = [
+    { to: "/", label: "Search", icon: Search },
+    { to: "/comparison", label: "Forecast Comparison", icon: BarChart3 },
+    { to: "/forecast", label: "Main Forecast", icon: CloudSun },
+    { to: "/history", label: "History", icon: History },
+    { to: "/settings", label: "Settings", icon: Settings },
+]
 
 export function Sidebar () {
+    const [isCollapsed, setIsCollapsed] = useState(false)
+
     const getSidebarItemClass = ({ isActive }: { isActive: boolean }) =>
         isActive ? "sidebar-item sidebar-item-active" : "sidebar-item"
 
     return (
-        <aside className="aside">
+        <aside className={isCollapsed ? "aside aside-collapsed" : "aside"}>
             <div className="sidebar-header">
-                <span>Weather Analyzer</span>
-                <button className="hide-sidebar-button">
-                    <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        >
-                        <rect x="3" y="4" width="18" height="16" rx="2" />
-                        <path d="M9 4v16" />
-                        <path d="m15 12-3-3" />
-                        <path d="m15 12-3 3" />
-                        </svg>
+                <span className="sidebar-title">Weather Analyzer</span>
+                <button
+                    className="hide-sidebar-button"
+                    type="button"
+                    aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                    title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                    onClick={() => setIsCollapsed((current) => !current)}
+                >
+                    {isCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
                 </button>
             </div>
             <nav className="sidebar-nav">
                 <ul className="sidebar-list">
-                <li><NavLink to="/" className={getSidebarItemClass}>Search</NavLink></li>
-                <li><NavLink to="/comparison" className={getSidebarItemClass}>Forecast Comparison</NavLink></li>
-                <li><NavLink to="/accuracy" className={getSidebarItemClass}>Forecast Accuracy</NavLink></li>
-                <li><NavLink to="/history" className={getSidebarItemClass}>History</NavLink></li>
-                <li><NavLink to="/settings" className={getSidebarItemClass}>Settings</NavLink></li>
+                    {sidebarItems.map((item) => {
+                        const Icon = item.icon
+
+                        return (
+                            <li key={item.to}>
+                                <NavLink to={item.to} className={getSidebarItemClass} title={item.label}>
+                                    <Icon className="sidebar-item-icon" size={19} />
+                                    <span className="sidebar-item-text">{item.label}</span>
+                                </NavLink>
+                            </li>
+                        )
+                    })}
                 </ul>
             </nav>
         </aside>

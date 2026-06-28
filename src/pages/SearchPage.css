@@ -87,3 +87,47 @@ main {
     background-color: var(--button-hover);
     color: var(--text-h);
 }
+
+@media (max-width: 760px) {
+    main {
+        padding: 64px 18px 32px;
+    }
+
+    .container {
+        gap: 14px;
+    }
+
+    .search-image {
+        width: 160px;
+        max-width: 60%;
+    }
+
+    .container h1 {
+        font-size: 32px;
+    }
+
+    .container p {
+        font-size: 15px;
+    }
+
+    .input-field-container {
+        flex-direction: column;
+        align-items: stretch;
+        height: auto;
+        padding: 12px;
+    }
+
+    .search-button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    main {
+        padding-inline: 14px;
+    }
+
+    .container h1 {
+        font-size: 28px;
+    }
+}
