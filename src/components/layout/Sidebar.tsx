@@ -1,14 +1,12 @@
 import { useState } from "react"
-import { BarChart3, CloudSun, History, PanelLeftClose, PanelLeftOpen, Search, Settings } from "lucide-react"
+import { BarChart3, CloudSun, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react"
 import { NavLink } from "react-router-dom"
 import "./Sidebar.css"
 
 const sidebarItems = [
     { to: "/", label: "Search", icon: Search },
-    { to: "/comparison", label: "Forecast Comparison", icon: BarChart3 },
     { to: "/forecast", label: "Main Forecast", icon: CloudSun },
-    { to: "/history", label: "History", icon: History },
-    { to: "/settings", label: "Settings", icon: Settings },
+    { to: "/comparison", label: "Forecast Comparison", icon: BarChart3 },
 ]
 
 export function Sidebar () {
