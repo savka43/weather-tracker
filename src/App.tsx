@@ -1,5 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import { Sidebar } from './components/layout/Sidebar'
+import AccuracyPage from './pages/AccuracyPage'
+import DashboardPage from './pages/DashboardPage'
 import MainForecastPage from './pages/MainForecast'
 import ForecastComparisonPage from './pages/ForecastComparisonPage'
 import SearchPage from './pages/SearchPage'
@@ -12,9 +14,10 @@ function App() {
       <Sidebar />
       <Routes>
         <Route path="/" element={<SearchPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/forecast" element={<MainForecastPage />} />
         <Route path="/comparison" element={<ForecastComparisonPage />} />
-        <Route path="/accuracy" element={<MainForecastPage />} />
+        <Route path="/accuracy" element={<AccuracyPage />} />
       </Routes>
     </div>
   )

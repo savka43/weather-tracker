@@ -1,9 +1,5 @@
-import MainForecast from '../components/dashboard/MainForecast'
+import DashboardPage from './DashboardPage'
 
 export default function MainForecastPage() {
-    return (
-        <main className="main-forecast-page">
-            <MainForecast />
-        </main>
-    )
+    return <DashboardPage />
 }

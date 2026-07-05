@@ -1,51 +1,35 @@
 import HourlyForecast from './HourlyForecast'
-import { WeatherIcon, type WeatherType } from './WeatherIcon'
+import type { WeatherResponse } from '../../types/weather'
+import AiSummaryCard from './AiSummaryCard'
+import ConfidenceCard from './ConfidenceCard'
+import SourceForecastList from './SourceForecastList'
+import WeatherMainCard from './WeatherMainCard'
 import './MainForecast.css'
 
-const currentWeather: {
-    city: string
-    condition: string
-    temperature: string
-    feelsLike: string
-    type: WeatherType
-    updatedAt: string
-} = {
-    city: 'Moscow',
-    condition: 'Partly cloudy',
-    temperature: '21°',
-    feelsLike: 'Feels like 19°',
-    type: 'cloudy',
-    updatedAt: 'Updated 14:00',
+type MainForecastProps = {
+    weather: WeatherResponse
 }
 
-const details = [
-    { label: 'Humidity', value: '68%' },
-    { label: 'Wind', value: '12 km/h' },
-    { label: 'Pressure', value: '1014 hPa' },
-    { label: 'Visibility', value: '9 km' },
-]
+export default function MainForecast({ weather }: MainForecastProps) {
+    const details = [
+        { label: 'Humidity', value: `${weather.humidity}%` },
+        { label: 'Wind', value: `${weather.wind_speed} m/s` },
+        { label: 'Pressure', value: `${weather.pressure} hPa` },
+        { label: 'Rain', value: `${weather.rain_probability}%` },
+    ]
 
-export default function MainForecast() {
     return (
         <section className="forecast-dashboard" aria-labelledby="main-forecast-title">
             <div className="forecast-header">
                 <div>
                     <span className="forecast-eyebrow">Current weather</span>
-                    <h1 id="main-forecast-title">{currentWeather.city}</h1>
+                    <h1 id="main-forecast-title">AI Forecast Dashboard</h1>
                 </div>
-                <span className="forecast-updated">{currentWeather.updatedAt}</span>
+                <span className="forecast-updated">{weather.country ?? 'Mock data'}</span>
             </div>
 
             <div className="info-container">
-                <div className="main-info-container">
-                    <WeatherIcon type={currentWeather.type} className="svg-weather" />
-
-                    <div className="temperature-block">
-                        <span className="temperature-value">{currentWeather.temperature}</span>
-                        <span className="temperature-label">{currentWeather.condition}</span>
-                        <span className="temperature-feels">{currentWeather.feelsLike}</span>
-                    </div>
-                </div>
+                <WeatherMainCard weather={weather} />
 
                 <ul className="ul-other-info" aria-label="Weather details">
                     {details.map((item) => (
@@ -57,7 +41,13 @@ export default function MainForecast() {
                 </ul>
             </div>
 
-            <HourlyForecast />
+            <div className="dashboard-secondary-grid">
+                <ConfidenceCard confidence={weather.confidence} />
+                <AiSummaryCard summary={weather.summary} />
+            </div>
+
+            <HourlyForecast items={weather.hourly_forecast} />
+            <SourceForecastList sources={weather.sources} />
         </section>
     )
 }
