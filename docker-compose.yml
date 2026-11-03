@@ -21,7 +21,6 @@ services:
     build:
       context: .
       args:
-        # фронт ходит на тот же домен, nginx проксирует /api на backend
         VITE_API_BASE_URL: /api
     ports:
       - "${FRONTEND_PORT:-8080}:80"

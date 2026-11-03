@@ -1,6 +1,5 @@
 from app.schemas.weather import ComparisonResponse, HourlyForecastItem, WeatherResponse, WeatherSourceForecast
 
-
 def _source_forecasts() -> list[WeatherSourceForecast]:
     return [
         WeatherSourceForecast(source="Open-Meteo", temperature=18.1, rain_probability=61, wind_speed=5.1, confidence=78),
@@ -8,7 +7,6 @@ def _source_forecasts() -> list[WeatherSourceForecast]:
         WeatherSourceForecast(source="WeatherAPI", temperature=18.4, rain_probability=59, wind_speed=4.9, confidence=76),
         WeatherSourceForecast(source="AI Model", temperature=18.5, rain_probability=64, wind_speed=5.4, confidence=82),
     ]
-
 
 def get_weather_by_city(city: str) -> WeatherResponse:
     normalized_city = city.strip() or "Unknown"
@@ -38,9 +36,13 @@ def get_weather_by_city(city: str) -> WeatherResponse:
         sources=_source_forecasts(),
     )
 
+SUMMARY_RU = (
+    "{city}: ИИ ожидает облачную погоду с умеренной вероятностью дождя. "
+    "Ветер будет комфортным, а влажность останется повышенной до вечера."
+)
 
-def get_weather_by_coords(lat: float, lon: float, name: str | None = None) -> WeatherResponse:
-    """Mock: values depend on latitude so different places on the map look different."""
+
+def get_weather_by_coords(lat: float, lon: float, name: str | None = None, lang: str = "en") -> WeatherResponse:
     place = (name or "").strip() or f"{lat:.2f}, {lon:.2f}"
     base = get_weather_by_city(place)
     shift = round(14 - abs(lat) * 0.45, 1)
@@ -55,8 +57,9 @@ def get_weather_by_coords(lat: float, lon: float, name: str | None = None) -> We
     ]
     if base.temperature <= 0:
         base.condition = "Snow"
+    if lang == "ru":
+        base.summary = SUMMARY_RU.format(city=place)
     return base
-
 
 def get_weather_comparison(city: str) -> ComparisonResponse:
     normalized_city = city.strip() or "Unknown"

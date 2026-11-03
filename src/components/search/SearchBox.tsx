@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { LoaderCircle, MapPin, Search, X } from 'lucide-react'
+import { useI18n } from '../../i18n/context'
 import { searchPlaces } from '../../services/geocoding'
 import type { Place } from '../../types/weather'
 
@@ -11,13 +12,13 @@ const MIN_QUERY_LENGTH = 2
 const DEBOUNCE_MS = 300
 
 export default function SearchBox({ onSelect }: SearchBoxProps) {
+    const { lang, t } = useI18n()
     const [query, setQuery] = useState('')
     const [results, setResults] = useState<Place[]>([])
     const [isOpen, setIsOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [activeIndex, setActiveIndex] = useState(-1)
     const rootRef = useRef<HTMLDivElement>(null)
-    // после выбора результата в поле подставляется название — искать его заново не нужно
     const skipSearchRef = useRef(false)
 
     useEffect(() => {
@@ -32,7 +33,7 @@ export default function SearchBox({ onSelect }: SearchBoxProps) {
 
         const timer = window.setTimeout(async () => {
             try {
-                const places = await searchPlaces(trimmed, controller.signal)
+                const places = await searchPlaces(trimmed, lang, controller.signal)
                 setResults(places)
                 setActiveIndex(places.length ? 0 : -1)
             } catch {
@@ -46,7 +47,7 @@ export default function SearchBox({ onSelect }: SearchBoxProps) {
             window.clearTimeout(timer)
             controller.abort()
         }
-    }, [query])
+    }, [query, lang])
 
     useEffect(() => {
         function handlePointerDown(event: PointerEvent) {
@@ -91,7 +92,7 @@ export default function SearchBox({ onSelect }: SearchBoxProps) {
                 <input
                     type="text"
                     className="search-input"
-                    placeholder="Search a city or click the map"
+                    placeholder={t('search.placeholder')}
                     value={query}
                     onChange={(event) => {
                         const value = event.target.value
@@ -107,12 +108,12 @@ export default function SearchBox({ onSelect }: SearchBoxProps) {
                     aria-controls="search-results"
                     aria-autocomplete="list"
                 />
-                {isLoading && <LoaderCircle className="spin search-status" size={18} aria-label="Searching" />}
+                {isLoading && <LoaderCircle className="spin search-status" size={18} aria-label={t('search.searching')} />}
                 {query && !isLoading && (
                     <button
                         type="button"
                         className="icon-button search-clear"
-                        aria-label="Clear search"
+                        aria-label={t('search.clear')}
                         onClick={() => {
                             setQuery('')
                             setResults([])
@@ -142,7 +143,7 @@ export default function SearchBox({ onSelect }: SearchBoxProps) {
                             </button>
                         </li>
                     ))}
-                    {!isLoading && results.length === 0 && <li className="search-empty">Nothing found</li>}
+                    {!isLoading && results.length === 0 && <li className="search-empty">{t('search.empty')}</li>}
                 </ul>
             )}
         </div>

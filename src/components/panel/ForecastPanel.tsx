@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Droplets, Gauge, LoaderCircle, MousePointerClick, RotateCw, Sparkles, Umbrella, Wind } from 'lucide-react'
+import { useI18n } from '../../i18n/context'
 import type { Place, WeatherResponse } from '../../types/weather'
 import { WeatherIcon } from '../weather/WeatherIcon'
-import { getHourlyWeatherType, getWeatherType } from '../weather/weatherType'
+import { conditionKey, getHourlyWeatherType, getWeatherType } from '../weather/weatherType'
 
 export type ForecastStatus = 'idle' | 'loading' | 'error' | 'ready'
 
@@ -19,15 +20,16 @@ type Tab = 'forecast' | 'sources'
 
 export default function ForecastPanel({ place, weather, status, collapsed, onToggle, onRetry }: ForecastPanelProps) {
     const [tab, setTab] = useState<Tab>('forecast')
+    const { t } = useI18n()
 
     return (
-        <aside className={collapsed ? 'forecast-panel glass collapsed' : 'forecast-panel glass'} aria-label="Forecast">
+        <aside className={collapsed ? 'forecast-panel glass collapsed' : 'forecast-panel glass'} aria-label={t('panel.label')}>
             <header className="panel-header">
                 <div className="panel-title">
-                    <h1>{place?.name ?? 'AI Weather Analyzer'}</h1>
-                    <span>{place ? place.label || `${place.lat.toFixed(2)}, ${place.lon.toFixed(2)}` : 'Pick a place to start'}</span>
+                    <h1>{place?.name ?? t('app.title')}</h1>
+                    <span>{place ? place.label || `${place.lat.toFixed(2)}, ${place.lon.toFixed(2)}` : t('panel.hint')}</span>
                 </div>
-                <button type="button" className="icon-button" onClick={onToggle} aria-label={collapsed ? 'Expand panel' : 'Collapse panel'}>
+                <button type="button" className="icon-button" onClick={onToggle} aria-label={collapsed ? t('panel.expand') : t('panel.collapse')}>
                     {collapsed ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                 </button>
             </header>
@@ -37,22 +39,22 @@ export default function ForecastPanel({ place, weather, status, collapsed, onTog
                     {status === 'idle' && (
                         <div className="panel-state">
                             <MousePointerClick size={36} aria-hidden />
-                            <p>Click anywhere on the map, search for a city or use your location.</p>
+                            <p>{t('state.idle')}</p>
                         </div>
                     )}
 
                     {status === 'loading' && (
                         <div className="panel-state">
                             <LoaderCircle className="spin" size={32} aria-hidden />
-                            <p>AI is analyzing the forecasts…</p>
+                            <p>{t('state.loading')}</p>
                         </div>
                     )}
 
                     {status === 'error' && (
                         <div className="panel-state">
-                            <p>Could not load the forecast. Check that the backend is running.</p>
+                            <p>{t('state.error')}</p>
                             <button type="button" className="primary-button" onClick={onRetry}>
-                                <RotateCw size={16} /> Retry
+                                <RotateCw size={16} /> {t('state.retry')}
                             </button>
                         </div>
                     )}
@@ -61,10 +63,10 @@ export default function ForecastPanel({ place, weather, status, collapsed, onTog
                         <>
                             <div className="tabs" role="tablist">
                                 <button type="button" role="tab" aria-selected={tab === 'forecast'} className={tab === 'forecast' ? 'tab active' : 'tab'} onClick={() => setTab('forecast')}>
-                                    Forecast
+                                    {t('tab.forecast')}
                                 </button>
                                 <button type="button" role="tab" aria-selected={tab === 'sources'} className={tab === 'sources' ? 'tab active' : 'tab'} onClick={() => setTab('sources')}>
-                                    Sources
+                                    {t('tab.sources')}
                                 </button>
                             </div>
 
@@ -78,20 +80,22 @@ export default function ForecastPanel({ place, weather, status, collapsed, onTog
 }
 
 function ForecastTab({ weather }: { weather: WeatherResponse }) {
+    const { t } = useI18n()
+    const condition = t(conditionKey(weather.condition))
     const details = [
-        { icon: Droplets, label: 'Humidity', value: `${weather.humidity}%` },
-        { icon: Wind, label: 'Wind', value: `${weather.wind_speed} m/s` },
-        { icon: Gauge, label: 'Pressure', value: `${weather.pressure} hPa` },
-        { icon: Umbrella, label: 'Rain', value: `${weather.rain_probability}%` },
+        { icon: Droplets, label: t('detail.humidity'), value: `${weather.humidity}%` },
+        { icon: Wind, label: t('detail.wind'), value: `${weather.wind_speed} ${t('unit.speed')}` },
+        { icon: Gauge, label: t('detail.pressure'), value: `${weather.pressure} ${t('unit.pressure')}` },
+        { icon: Umbrella, label: t('detail.rain'), value: `${weather.rain_probability}%` },
     ]
 
     return (
         <div className="tab-content">
             <section className="now">
-                <WeatherIcon type={getWeatherType(weather.condition)} className="now-icon" />
+                <WeatherIcon type={getWeatherType(weather.condition)} className="now-icon" title={condition} />
                 <div>
                     <span className="now-temp">{Math.round(weather.temperature)}°</span>
-                    <span className="now-condition">{weather.condition}</span>
+                    <span className="now-condition">{condition}</span>
                 </div>
             </section>
 
@@ -107,22 +111,22 @@ function ForecastTab({ weather }: { weather: WeatherResponse }) {
 
             <section className="ai-card">
                 <div className="ai-card-header">
-                    <span><Sparkles size={16} aria-hidden /> AI decision</span>
+                    <span><Sparkles size={16} aria-hidden /> {t('ai.decision')}</span>
                     <strong>{weather.confidence}%</strong>
                 </div>
-                <div className="meter" aria-label={`Confidence ${weather.confidence}%`}>
+                <div className="meter" aria-label={t('ai.confidence', { value: weather.confidence })}>
                     <span style={{ width: `${weather.confidence}%` }} />
                 </div>
                 <p>{weather.summary}</p>
             </section>
 
             <section>
-                <h2 className="section-title">Next hours</h2>
+                <h2 className="section-title">{t('hourly.title')}</h2>
                 <ul className="hourly">
                     {weather.hourly_forecast.map((item) => (
                         <li key={item.time}>
                             <span>{item.time}</span>
-                            <WeatherIcon type={getHourlyWeatherType(item)} className="hourly-icon" />
+                            <WeatherIcon type={getHourlyWeatherType(item)} className="hourly-icon" title={t('hourly.rain', { value: item.rain_probability })} />
                             <strong>{Math.round(item.temperature)}°</strong>
                             <small>{item.rain_probability}%</small>
                         </li>
@@ -134,9 +138,10 @@ function ForecastTab({ weather }: { weather: WeatherResponse }) {
 }
 
 function SourcesTab({ weather }: { weather: WeatherResponse }) {
+    const { t } = useI18n()
     return (
         <div className="tab-content">
-            <p className="muted">How each source sees the weather. The AI weighs them to make the final decision.</p>
+            <p className="muted">{t('sources.hint')}</p>
             <ul className="sources">
                 {weather.sources.map((source) => {
                     const isAi = source.source.toLowerCase().includes('ai')
@@ -149,10 +154,10 @@ function SourcesTab({ weather }: { weather: WeatherResponse }) {
                             </div>
                             <div className="source-stats">
                                 <span><Umbrella size={14} aria-hidden /> {source.rain_probability}%</span>
-                                <span><Wind size={14} aria-hidden /> {source.wind_speed} m/s</span>
+                                <span><Wind size={14} aria-hidden /> {source.wind_speed} {t('unit.speed')}</span>
                             </div>
                             {source.confidence != null && (
-                                <div className="meter small" aria-label={`Confidence ${source.confidence}%`}>
+                                <div className="meter small" aria-label={t('ai.confidence', { value: source.confidence })}>
                                     <span style={{ width: `${source.confidence}%` }} />
                                 </div>
                             )}

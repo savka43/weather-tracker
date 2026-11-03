@@ -19,3 +19,7 @@ export function getHourlyWeatherType(item: HourlyForecastItem): WeatherType {
 
     return 'clear'
 }
+
+export function conditionKey(condition: string) {
+    return `condition.${getWeatherType(condition)}` as const
+}

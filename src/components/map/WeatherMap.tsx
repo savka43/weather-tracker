@@ -15,12 +15,8 @@ type WeatherMapProps = {
 const DEFAULT_CENTER: [number, number] = [50, 20]
 const DEFAULT_ZOOM = 4
 const FOCUS_ZOOM = 9
-
-// Стандартные тайлы OSM — без ключа. Тёмная тема делается CSS-фильтром (см. App.css)
 const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-
-// Своя метка на CSS: стандартная иконка Leaflet ломается при сборке Vite
 const pinIcon = L.divIcon({
     className: 'map-pin',
     html: '<span class="map-pin-body"></span><span class="map-pin-pulse"></span>',

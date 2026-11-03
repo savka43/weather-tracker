@@ -5,6 +5,8 @@ import WeatherMap, { type FlyTarget, type LatLon } from './components/map/Weathe
 import ForecastPanel, { type ForecastStatus } from './components/panel/ForecastPanel'
 import SearchBox from './components/search/SearchBox'
 import { useTheme } from './hooks/useTheme'
+import { useI18n } from './i18n/context'
+import type { TranslationKey } from './i18n/translations'
 import { reverseGeocode } from './services/geocoding'
 import { getWeatherForPlace } from './services/weatherApi'
 import type { Place, WeatherResponse } from './types/weather'
@@ -22,6 +24,7 @@ function placeFromParams(params: URLSearchParams): Place | null {
 
 export default function App() {
     const { theme, toggleTheme } = useTheme()
+    const { lang, toggleLang, t } = useI18n()
     const [searchParams, setSearchParams] = useSearchParams()
 
     const [place, setPlace] = useState<Place | null>(() => placeFromParams(searchParams))
@@ -34,17 +37,15 @@ export default function App() {
 
     const [collapsed, setCollapsed] = useState(false)
     const [isLocating, setIsLocating] = useState(false)
-    const [notice, setNotice] = useState('')
+    const [notice, setNotice] = useState<TranslationKey | null>(null)
 
     const reverseRef = useRef<AbortController | null>(null)
-
-    // Загружаем прогноз при смене места
     useEffect(() => {
         if (!place) return
 
         const controller = new AbortController()
 
-        getWeatherForPlace(place, controller.signal)
+        getWeatherForPlace(place, lang, controller.signal)
             .then((data) => {
                 setWeather(data)
                 setStatus('ready')
@@ -54,11 +55,11 @@ export default function App() {
             })
 
         return () => controller.abort()
-    }, [place, reloadKey])
+    }, [place, lang, reloadKey])
 
     useEffect(() => {
         if (!notice) return
-        const timer = window.setTimeout(() => setNotice(''), 4000)
+        const timer = window.setTimeout(() => setNotice(null), 4000)
         return () => window.clearTimeout(timer)
     }, [notice])
 
@@ -89,18 +90,18 @@ export default function App() {
             setCollapsed(false)
 
             try {
-                const resolved = await reverseGeocode(point.lat, point.lon, controller.signal)
+                const resolved = await reverseGeocode(point.lat, point.lon, lang, controller.signal)
                 if (!controller.signal.aborted) selectPlace(resolved, fly)
             } catch {
-                // запрос отменён новым кликом
+                return
             }
         },
-        [selectPlace],
+        [selectPlace, lang],
     )
 
     const locate = useCallback(() => {
         if (!navigator.geolocation) {
-            setNotice('Geolocation is not supported by this browser.')
+            setNotice('notice.geoUnsupported')
             return
         }
 
@@ -112,7 +113,7 @@ export default function App() {
             },
             () => {
                 setIsLocating(false)
-                setNotice('Could not get your location. Check browser permissions.')
+                setNotice('notice.geoFailed')
             },
             { enableHighAccuracy: false, timeout: 10000 },
         )
@@ -124,7 +125,7 @@ export default function App() {
 
             <div className="top-bar">
                 <SearchBox onSelect={(next) => selectPlace(next, true)} />
-                <MapControls theme={theme} onToggleTheme={toggleTheme} onLocate={locate} isLocating={isLocating} />
+                <MapControls theme={theme} onToggleTheme={toggleTheme} lang={lang} onToggleLang={toggleLang} onLocate={locate} isLocating={isLocating} />
             </div>
 
             <ForecastPanel
@@ -141,7 +142,7 @@ export default function App() {
 
             {notice && (
                 <div className="toast glass" role="status">
-                    {notice}
+                    {t(notice)}
                 </div>
             )}
         </div>

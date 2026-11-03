@@ -1,5 +1,3 @@
-/* ---------- layout ---------- */
-
 .app {
   position: relative;
   height: 100%;
@@ -37,9 +35,6 @@
 .top-bar > * {
   pointer-events: auto;
 }
-
-/* ---------- buttons ---------- */
-
 .icon-button {
   display: inline-flex;
   align-items: center;
@@ -92,6 +87,12 @@
   gap: 8px;
 }
 
+.lang-button {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 .spin {
   animation: spin 0.9s linear infinite;
 }
@@ -101,9 +102,6 @@
     transform: rotate(360deg);
   }
 }
-
-/* ---------- search ---------- */
-
 .search-box {
   width: min(380px, 100%);
   border-radius: var(--radius);
@@ -191,9 +189,6 @@
   color: var(--text-muted);
   font-size: 14px;
 }
-
-/* ---------- forecast panel ---------- */
-
 .forecast-panel {
   position: absolute;
   top: 84px;
@@ -303,9 +298,6 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-
-/* now */
-
 .now {
   display: flex;
   align-items: center;
@@ -329,9 +321,6 @@
   color: var(--text-muted);
   font-weight: 500;
 }
-
-/* details */
-
 .details {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -358,9 +347,6 @@
   color: var(--text-h);
   font-size: 16px;
 }
-
-/* ai card */
-
 .ai-card {
   padding: 14px 16px;
   border-radius: 14px;
@@ -406,9 +392,6 @@
 .meter.small {
   height: 4px;
 }
-
-/* hourly */
-
 .hourly {
   display: flex;
   gap: 8px;
@@ -440,9 +423,6 @@
   width: 30px;
   height: 30px;
 }
-
-/* sources */
-
 .sources {
   display: flex;
   flex-direction: column;
@@ -498,9 +478,6 @@
   align-items: center;
   gap: 4px;
 }
-
-/* ---------- map pin ---------- */
-
 .map-pin {
   position: relative;
 }
@@ -529,9 +506,6 @@
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.25);
 }
-
-/* ---------- leaflet tweaks ---------- */
-
 .leaflet-container {
   font-family: inherit;
   cursor: crosshair;
@@ -563,9 +537,6 @@
 .leaflet-control-attribution a {
   color: var(--accent) !important;
 }
-
-/* ---------- toast ---------- */
-
 .toast {
   position: absolute;
   top: 84px;
@@ -577,9 +548,6 @@
   font-size: 14px;
   transform: translateX(-50%);
 }
-
-/* ---------- mobile: bottom sheet ---------- */
-
 @media (max-width: 760px) {
   .top-bar {
     top: 12px;

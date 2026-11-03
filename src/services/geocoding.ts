@@ -1,3 +1,4 @@
+import type { Lang } from '../i18n/translations'
 import type { Place } from '../types/weather'
 
 type OpenMeteoResult = {
@@ -14,11 +15,8 @@ type NominatimResult = {
     address?: Record<string, string | undefined>
 }
 
-const uiLanguage = navigator.language.split('-')[0] || 'en'
-
-/** Поиск мест по названию — геокодер Open-Meteo (бесплатно, без ключа). */
-export async function searchPlaces(query: string, signal?: AbortSignal): Promise<Place[]> {
-    const params = new URLSearchParams({ name: query, count: '6', language: uiLanguage, format: 'json' })
+export async function searchPlaces(query: string, lang: Lang, signal?: AbortSignal): Promise<Place[]> {
+    const params = new URLSearchParams({ name: query, count: '6', language: lang, format: 'json' })
     const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?${params}`, { signal })
 
     if (!response.ok) {
@@ -34,9 +32,7 @@ export async function searchPlaces(query: string, signal?: AbortSignal): Promise
         lon: item.longitude,
     }))
 }
-
-/** Название места по координатам — Nominatim (OSM). Лимит: 1 запрос в секунду. */
-export async function reverseGeocode(lat: number, lon: number, signal?: AbortSignal): Promise<Place> {
+export async function reverseGeocode(lat: number, lon: number, lang: Lang, signal?: AbortSignal): Promise<Place> {
     const fallback: Place = { name: `${lat.toFixed(2)}, ${lon.toFixed(2)}`, label: '', lat, lon }
 
     try {
@@ -45,7 +41,7 @@ export async function reverseGeocode(lat: number, lon: number, signal?: AbortSig
             lon: String(lon),
             format: 'jsonv2',
             zoom: '10',
-            'accept-language': uiLanguage,
+            'accept-language': lang,
         })
         const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`, { signal })
 
