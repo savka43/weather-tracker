@@ -121,7 +121,7 @@ export default function App() {
 
     return (
         <div className="app">
-            <WeatherMap marker={marker} flyTarget={flyTarget} onPick={pickOnMap} />
+            <WeatherMap marker={marker} flyTarget={flyTarget} theme={theme} onPick={pickOnMap} />
 
             <div className="top-bar">
                 <SearchBox onSelect={(next) => selectPlace(next, true)} />

@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
-import L from 'leaflet'
-import { AttributionControl, MapContainer, Marker, TileLayer, ZoomControl, useMap, useMapEvents } from 'react-leaflet'
-import 'leaflet/dist/leaflet.css'
+import { useEffect, useRef } from 'react'
+import * as maplibregl from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
+import type { Theme } from '../../hooks/useTheme'
 
 export type LatLon = { lat: number; lon: number }
 export type FlyTarget = LatLon & { id: number }
@@ -9,62 +10,113 @@ export type FlyTarget = LatLon & { id: number }
 type WeatherMapProps = {
     marker: LatLon | null
     flyTarget: FlyTarget | null
+    theme: Theme
     onPick: (point: LatLon) => void
 }
 
-const DEFAULT_CENTER: [number, number] = [50, 20]
-const DEFAULT_ZOOM = 4
-const FOCUS_ZOOM = 9
-const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-const pinIcon = L.divIcon({
-    className: 'map-pin',
-    html: '<span class="map-pin-body"></span><span class="map-pin-pulse"></span>',
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-})
-
-function ClickHandler({ onPick }: Pick<WeatherMapProps, 'onPick'>) {
-    useMapEvents({
-        click(event) {
-            onPick({ lat: event.latlng.lat, lon: L.Util.wrapNum(event.latlng.lng, [-180, 180], true) })
-        },
-    })
-
-    return null
+const STYLES: Record<Theme, string> = {
+    light: 'https://tiles.openfreemap.org/styles/liberty',
+    dark: 'https://tiles.openfreemap.org/styles/dark',
 }
 
-function FlyController({ target }: { target: FlyTarget | null }) {
-    const map = useMap()
+maplibregl.setWorkerUrl(workerUrl)
+
+const DEFAULT_CENTER: [number, number] = [20, 50]
+const DEFAULT_ZOOM = 3.5
+const FOCUS_ZOOM = 9
+
+function createPinElement() {
+    const element = document.createElement('div')
+    element.className = 'map-pin'
+    element.innerHTML = '<span class="map-pin-body"></span><span class="map-pin-pulse"></span>'
+    return element
+}
+
+export default function WeatherMap({ marker, flyTarget, theme, onPick }: WeatherMapProps) {
+    const containerRef = useRef<HTMLDivElement>(null)
+    const mapRef = useRef<maplibregl.Map | null>(null)
+    const markerRef = useRef<maplibregl.Marker | null>(null)
+    const appliedThemeRef = useRef<Theme | null>(null)
+    const onPickRef = useRef(onPick)
+    const initialRef = useRef({ theme, flyTarget })
 
     useEffect(() => {
-        if (target) {
-            map.flyTo([target.lat, target.lon], Math.max(map.getZoom(), FOCUS_ZOOM), { duration: 1.2 })
+        onPickRef.current = onPick
+    }, [onPick])
+
+    useEffect(() => {
+        const { theme: initialTheme, flyTarget: initialTarget } = initialRef.current
+
+        const map = new maplibregl.Map({
+            container: containerRef.current!,
+            style: STYLES[initialTheme],
+            center: initialTarget ? [initialTarget.lon, initialTarget.lat] : DEFAULT_CENTER,
+            zoom: initialTarget ? FOCUS_ZOOM : DEFAULT_ZOOM,
+            minZoom: 1.5,
+            dragRotate: false,
+            pitchWithRotate: false,
+            attributionControl: false,
+        })
+
+        map.touchZoomRotate.disableRotation()
+        map.keyboard.disableRotation()
+        map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-left')
+        map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left')
+        map.on('click', (event) => {
+            onPickRef.current({ lat: event.lngLat.lat, lon: event.lngLat.wrap().lng })
+        })
+
+        mapRef.current = map
+        appliedThemeRef.current = initialTheme
+
+        return () => {
+            map.remove()
+            mapRef.current = null
+            markerRef.current = null
         }
-    }, [map, target])
+    }, [])
 
-    return null
-}
+    useEffect(() => {
+        const map = mapRef.current
 
-export default function WeatherMap({ marker, flyTarget, onPick }: WeatherMapProps) {
-    const initialCenter: [number, number] = flyTarget ? [flyTarget.lat, flyTarget.lon] : DEFAULT_CENTER
+        if (map && appliedThemeRef.current !== theme) {
+            map.setStyle(STYLES[theme])
+            appliedThemeRef.current = theme
+        }
+    }, [theme])
 
-    return (
-        <MapContainer
-            className="weather-map"
-            center={initialCenter}
-            zoom={flyTarget ? FOCUS_ZOOM : DEFAULT_ZOOM}
-            minZoom={2}
-            worldCopyJump
-            zoomControl={false}
-            attributionControl={false}
-        >
-            <TileLayer url={TILE_URL} attribution={ATTRIBUTION} maxZoom={19} />
-            <ZoomControl position="bottomleft" />
-            <AttributionControl position="bottomleft" prefix={false} />
-            <ClickHandler onPick={onPick} />
-            <FlyController target={flyTarget} />
-            {marker && <Marker position={[marker.lat, marker.lon]} icon={pinIcon} interactive={false} />}
-        </MapContainer>
-    )
+    useEffect(() => {
+        const map = mapRef.current
+
+        if (!map) return
+
+        if (!marker) {
+            markerRef.current?.remove()
+            markerRef.current = null
+            return
+        }
+
+        if (!markerRef.current) {
+            markerRef.current = new maplibregl.Marker({ element: createPinElement(), anchor: 'bottom' })
+                .setLngLat([marker.lon, marker.lat])
+                .addTo(map)
+        } else {
+            markerRef.current.setLngLat([marker.lon, marker.lat])
+        }
+    }, [marker])
+
+    useEffect(() => {
+        const map = mapRef.current
+
+        if (map && flyTarget) {
+            map.flyTo({
+                center: [flyTarget.lon, flyTarget.lat],
+                zoom: Math.max(map.getZoom(), FOCUS_ZOOM),
+                speed: 1.4,
+                essential: true,
+            })
+        }
+    }, [flyTarget])
+
+    return <div ref={containerRef} className="weather-map" />
 }
