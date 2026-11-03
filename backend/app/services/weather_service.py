@@ -36,30 +36,6 @@ def get_weather_by_city(city: str) -> WeatherResponse:
         sources=_source_forecasts(),
     )
 
-SUMMARY_RU = (
-    "{city}: ИИ ожидает облачную погоду с умеренной вероятностью дождя. "
-    "Ветер будет комфортным, а влажность останется повышенной до вечера."
-)
-
-
-def get_weather_by_coords(lat: float, lon: float, name: str | None = None, lang: str = "en") -> WeatherResponse:
-    place = (name or "").strip() or f"{lat:.2f}, {lon:.2f}"
-    base = get_weather_by_city(place)
-    shift = round(14 - abs(lat) * 0.45, 1)
-
-    base.country = None if name else "Selected point"
-    base.temperature = round(base.temperature + shift, 1)
-    base.hourly_forecast = [
-        item.model_copy(update={"temperature": round(item.temperature + shift, 1)}) for item in base.hourly_forecast
-    ]
-    base.sources = [
-        source.model_copy(update={"temperature": round(source.temperature + shift, 1)}) for source in base.sources
-    ]
-    if base.temperature <= 0:
-        base.condition = "Snow"
-    if lang == "ru":
-        base.summary = SUMMARY_RU.format(city=place)
-    return base
 
 def get_weather_comparison(city: str) -> ComparisonResponse:
     normalized_city = city.strip() or "Unknown"

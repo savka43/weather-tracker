@@ -353,6 +353,14 @@
   background: var(--accent-soft);
 }
 
+.ai-card-off {
+  background: var(--surface-muted);
+}
+
+.ai-card-off .ai-card-header {
+  color: var(--text-muted);
+}
+
 .ai-card-header {
   display: flex;
   align-items: center;

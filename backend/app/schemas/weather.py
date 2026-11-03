@@ -15,6 +15,7 @@ class HourlyForecastItem(BaseModel):
     time: str
     temperature: float
     rain_probability: int
+    condition: str | None = None
 
 
 class WeatherSourceForecast(BaseModel):
@@ -23,6 +24,17 @@ class WeatherSourceForecast(BaseModel):
     rain_probability: int
     wind_speed: float
     confidence: int | None = None
+
+
+class SourceForecast(BaseModel):
+    source: str
+    temperature: float
+    condition: str
+    humidity: int
+    wind_speed: float
+    pressure: int
+    rain_probability: int
+    hourly: list[HourlyForecastItem]
 
 
 class WeatherResponse(BaseModel):
@@ -34,10 +46,12 @@ class WeatherResponse(BaseModel):
     wind_speed: float
     pressure: int
     rain_probability: int
-    confidence: int
-    summary: str
+    confidence: int | None
+    summary: str | None
     hourly_forecast: list[HourlyForecastItem]
     sources: list[WeatherSourceForecast]
+    ai_failed: bool = False
+    ai_error: str | None = None
 
 
 class ComparisonResponse(BaseModel):

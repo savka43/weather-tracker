@@ -12,6 +12,7 @@ export type HourlyForecastItem = {
     time: string
     temperature: number
     rain_probability: number
+    condition?: string | null
 }
 
 export type WeatherSourceForecast = {
@@ -31,10 +32,12 @@ export type WeatherResponse = {
     wind_speed: number
     pressure: number
     rain_probability: number
-    confidence: number
-    summary: string
+    confidence: number | null
+    summary: string | null
     hourly_forecast: HourlyForecastItem[]
     sources: WeatherSourceForecast[]
+    ai_failed: boolean
+    ai_error: string | null
 }
 
 export type ComparisonResponse = {

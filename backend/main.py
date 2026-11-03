@@ -1,10 +1,25 @@
+import logging
 import os
+from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app import weather
 
-app = FastAPI(title="AI Weather Analyzer API")
+logging.basicConfig(level=logging.INFO)
+
+PROVIDER_TIMEOUT_SECONDS = float(os.getenv("PROVIDER_TIMEOUT_SECONDS", "8"))
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with httpx.AsyncClient(timeout=PROVIDER_TIMEOUT_SECONDS) as client:
+        app.state.http = client
+        yield
+
+
+app = FastAPI(title="AI Weather Analyzer API", lifespan=lifespan)
 
 default_origins = [
     "http://localhost:5173",

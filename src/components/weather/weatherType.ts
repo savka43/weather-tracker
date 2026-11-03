@@ -14,6 +14,7 @@ export function getWeatherType(condition: string): WeatherType {
 }
 
 export function getHourlyWeatherType(item: HourlyForecastItem): WeatherType {
+    if (item.condition) return getWeatherType(item.condition)
     if (item.rain_probability >= 70) return 'rain'
     if (item.rain_probability >= 45) return 'cloudy'
 

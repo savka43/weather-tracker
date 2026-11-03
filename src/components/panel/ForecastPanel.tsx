@@ -109,16 +109,28 @@ function ForecastTab({ weather }: { weather: WeatherResponse }) {
                 ))}
             </ul>
 
-            <section className="ai-card">
-                <div className="ai-card-header">
-                    <span><Sparkles size={16} aria-hidden /> {t('ai.decision')}</span>
-                    <strong>{weather.confidence}%</strong>
-                </div>
-                <div className="meter" aria-label={t('ai.confidence', { value: weather.confidence })}>
-                    <span style={{ width: `${weather.confidence}%` }} />
-                </div>
-                <p>{weather.summary}</p>
-            </section>
+            {weather.ai_failed ? (
+                <section className="ai-card ai-card-off">
+                    <div className="ai-card-header">
+                        <span><Sparkles size={16} aria-hidden /> {t('ai.off')}</span>
+                        {weather.confidence != null && <strong>{weather.confidence}%</strong>}
+                    </div>
+                    <p>{t(weather.sources.length > 1 ? 'ai.offAverage' : 'ai.offSingle')}</p>
+                </section>
+            ) : (
+                <section className="ai-card">
+                    <div className="ai-card-header">
+                        <span><Sparkles size={16} aria-hidden /> {t('ai.decision')}</span>
+                        {weather.confidence != null && <strong>{weather.confidence}%</strong>}
+                    </div>
+                    {weather.confidence != null && (
+                        <div className="meter" aria-label={t('ai.confidence', { value: weather.confidence })}>
+                            <span style={{ width: `${weather.confidence}%` }} />
+                        </div>
+                    )}
+                    {weather.summary && <p>{weather.summary}</p>}
+                </section>
+            )}
 
             <section>
                 <h2 className="section-title">{t('hourly.title')}</h2>
