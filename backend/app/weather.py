@@ -1,9 +1,18 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from app.schemas.weather import ComparisonResponse, WeatherResponse
-from app.services.weather_service import get_weather_by_city, get_weather_comparison
+from app.services.weather_service import get_weather_by_city, get_weather_by_coords, get_weather_comparison
 
 router = APIRouter()
+
+
+@router.get("/weather", response_model=WeatherResponse)
+async def get_weather_for_coords(
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180),
+    name: str | None = Query(None, max_length=200),
+):
+    return get_weather_by_coords(lat, lon, name)
 
 
 @router.get("/weather/{city}", response_model=WeatherResponse)

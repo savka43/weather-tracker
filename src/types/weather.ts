@@ -41,3 +41,10 @@ export type ComparisonResponse = {
     city: string
     sources: WeatherSourceForecast[]
 }
+
+export type Place = {
+    name: string
+    label: string
+    lat: number
+    lon: number
+}
