@@ -115,7 +115,18 @@ function ForecastTab({ weather }: { weather: WeatherResponse }) {
                         <span><Sparkles size={16} aria-hidden /> {t('ai.off')}</span>
                         {weather.confidence != null && <strong>{weather.confidence}%</strong>}
                     </div>
-                    <p>{t(weather.sources.length > 1 ? 'ai.offAverage' : 'ai.offSingle')}</p>
+                    <p>
+                        {t(weather.ai_error === 'not_configured' ? 'ai.reasonOff' : 'ai.reasonFailed')}{' '}
+                        {t(weather.sources.length > 1 ? 'ai.dataAverage' : 'ai.dataSingle')}
+                    </p>
+                    {weather.recommendations.length > 0 && (
+                        <>
+                            <h3 className="ai-tips-title">{t('ai.tips')}</h3>
+                            <ul className="ai-recommendations">
+                                {weather.recommendations.map((item) => <li key={item}>{item}</li>)}
+                            </ul>
+                        </>
+                    )}
                 </section>
             ) : (
                 <section className="ai-card">
@@ -128,7 +139,12 @@ function ForecastTab({ weather }: { weather: WeatherResponse }) {
                             <span style={{ width: `${weather.confidence}%` }} />
                         </div>
                     )}
-                    {weather.summary && <p>{weather.summary}</p>}
+                    {weather.reasoning && <p>{weather.reasoning}</p>}
+                    {weather.recommendations.length > 0 && (
+                        <ul className="ai-recommendations">
+                            {weather.recommendations.map((item) => <li key={item}>{item}</li>)}
+                        </ul>
+                    )}
                 </section>
             )}
 

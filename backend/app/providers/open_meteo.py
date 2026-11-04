@@ -3,13 +3,13 @@ from datetime import datetime
 import httpx
 
 from app.providers.base import ProviderError
-from app.schemas.weather import HourlyForecastItem, SourceForecast
+from app.schemas.weather import Condition, HourlyForecastItem, SourceForecast
 
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 HOURS = 6
 
 
-def condition_from_wmo(code: int) -> str:
+def condition_from_wmo(code: int) -> Condition:
     if code in (0, 1):
         return "Clear"
     if code in (2, 3):
@@ -69,4 +69,5 @@ class OpenMeteoProvider:
             pressure=round(current["pressure_msl"]),
             rain_probability=int(probabilities[0]) if probabilities else 0,
             hourly=items,
+            utc_offset_seconds=data.get("utc_offset_seconds"),
         )

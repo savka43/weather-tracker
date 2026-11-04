@@ -1,18 +1,36 @@
 import asyncio
 import logging
+import time
 from collections import Counter
 from collections.abc import Iterable
 from statistics import mean, pstdev
 
 import httpx
 
+from app.ai.client import AIError, LLMClient
+from app.ai.decider import cache_key, decide
+from app.config import settings
 from app.providers.base import WeatherProvider
 from app.providers.open_meteo import OpenMeteoProvider
-from app.schemas.weather import HourlyForecastItem, SourceForecast, WeatherResponse, WeatherSourceForecast
+from app.providers.openweather import OpenWeatherProvider
+from app.providers.weatherapi import WeatherApiProvider
+from app.services.tips import build_tips
+from app.schemas.weather import AiError as AiErrorCode, HourlyForecastItem, SourceForecast, WeatherResponse, WeatherSourceForecast
 
 logger = logging.getLogger(__name__)
 
-PROVIDERS: list[WeatherProvider] = [OpenMeteoProvider()]
+
+def build_providers() -> list[WeatherProvider]:
+    """Open-Meteo работает без ключа; остальные подключаются, только если ключ задан в .env."""
+    providers: list[WeatherProvider] = [OpenMeteoProvider()]
+    if settings.openweather_api_key:
+        providers.append(OpenWeatherProvider(settings.openweather_api_key))
+    if settings.weatherapi_key:
+        providers.append(WeatherApiProvider(settings.weatherapi_key))
+    return providers
+
+
+PROVIDERS: list[WeatherProvider] = build_providers()
 
 
 class NoSourcesError(Exception):
@@ -50,17 +68,30 @@ def most_common(values: Iterable[str | None]) -> str | None:
     return counter.most_common(1)[0][0] if counter else None
 
 
-def average_forecast(sources: list[SourceForecast]) -> dict:
-    hours = min(len(source.hourly) for source in sources)
-    hourly = [
-        HourlyForecastItem(
-            time=sources[0].hourly[index].time,
-            temperature=round(mean(source.hourly[index].temperature for source in sources), 1),
-            rain_probability=round(mean(source.hourly[index].rain_probability for source in sources)),
-            condition=most_common(source.hourly[index].condition for source in sources),
+def average_hourly(sources: list[SourceForecast]) -> list[HourlyForecastItem]:
+    """Шкала времени — у источника с самым подробным прогнозом; в каждый час усредняем тех, у кого он есть.
+
+    У OpenWeather шаг 3 часа, поэтому выравниваем по времени, а не по индексу.
+    """
+    timeline = max(sources, key=lambda source: len(source.hourly)).hourly
+    by_time = [{item.time: item for item in source.hourly} for source in sources]
+
+    hourly: list[HourlyForecastItem] = []
+    for slot in timeline:
+        items = [hours[slot.time] for hours in by_time if slot.time in hours]
+        hourly.append(
+            HourlyForecastItem(
+                time=slot.time,
+                temperature=round(mean(item.temperature for item in items), 1),
+                rain_probability=round(mean(item.rain_probability for item in items)),
+                condition=most_common(item.condition for item in items),
+            )
         )
-        for index in range(hours)
-    ]
+    return hourly
+
+
+def average_forecast(sources: list[SourceForecast]) -> dict:
+    hourly = average_hourly(sources)
 
     return {
         "temperature": round(mean(source.temperature for source in sources), 1),
@@ -73,18 +104,27 @@ def average_forecast(sources: list[SourceForecast]) -> dict:
     }
 
 
-async def get_forecast(client: httpx.AsyncClient, lat: float, lon: float, name: str | None) -> WeatherResponse:
+async def get_forecast(
+    client: httpx.AsyncClient,
+    ai: LLMClient | None,
+    lat: float,
+    lon: float,
+    name: str | None,
+    lang: str,
+) -> WeatherResponse:
     sources = await collect_sources(client, lat, lon)
 
     if not sources:
         raise NoSourcesError("no weather provider responded")
 
-    return WeatherResponse(
-        city=(name or "").strip() or f"{lat:.2f}, {lon:.2f}",
-        country=None,
-        confidence=spread_confidence(sources),
-        summary=None,
-        sources=[
+    city = (name or "").strip() or f"{lat:.2f}, {lon:.2f}"
+    average = average_forecast(sources)
+    base = {
+        "city": city,
+        "country": None,
+        "humidity": average["humidity"],
+        "pressure": average["pressure"],
+        "sources": [
             WeatherSourceForecast(
                 source=source.source,
                 temperature=source.temperature,
@@ -93,7 +133,58 @@ async def get_forecast(client: httpx.AsyncClient, lat: float, lon: float, name: 
             )
             for source in sources
         ],
-        ai_failed=True,
-        ai_error="not_configured",
-        **average_forecast(sources),
+    }
+
+    def fallback(code: AiErrorCode) -> WeatherResponse:
+        return WeatherResponse(
+            **base,
+            temperature=average["temperature"],
+            condition=average["condition"],
+            wind_speed=average["wind_speed"],
+            rain_probability=average["rain_probability"],
+            hourly_forecast=average["hourly_forecast"],
+            confidence=spread_confidence(sources),
+            reasoning=None,
+            recommendations=build_tips(
+                average["temperature"],
+                average["condition"],
+                average["wind_speed"],
+                average["rain_probability"],
+                average["hourly_forecast"],
+                lang,
+            ),
+            ai_failed=True,
+            ai_error=code,
+        )
+
+    if ai is None:
+        return fallback("not_configured")
+
+    timeline = [item.time for item in average["hourly_forecast"]]
+    started = time.monotonic()
+    try:
+        decision = await decide(ai, sources, timeline, city, lang, cache_key(lat, lon, lang), settings.ai_timeout_seconds)
+    except AIError as error:
+        logger.warning(
+            "ai failed: code=%s city=%s duration=%.2fs detail=%s",
+            error.code, city, time.monotonic() - started, error,
+        )
+        return fallback(error.code)  # type: ignore[arg-type]
+
+    conditions = {item.time: item.condition for item in average["hourly_forecast"]}
+    return WeatherResponse(
+        **base,
+        temperature=decision.temperature,
+        condition=decision.condition,
+        wind_speed=decision.wind_speed,
+        rain_probability=decision.rain_probability,
+        hourly_forecast=[
+            item.model_copy(update={"condition": item.condition or conditions.get(item.time)}) for item in decision.hourly
+        ],
+        confidence=decision.confidence,
+        trusted_sources=decision.trusted_sources,
+        reasoning=decision.reasoning,
+        recommendations=decision.recommendations,
+        ai_failed=False,
+        ai_error=None,
     )

@@ -1,21 +1,41 @@
-from pydantic import BaseModel
+from typing import Annotated, Literal
 
+from pydantic import BaseModel, Field
 
-class WeatherBase(BaseModel):
-    city: str
-    temperature: float
-    condition: str
-    humidity: int | None = None
-    wind_speed: float | None = None
-    pressure: int | None = None
-    visibility: float | None = None
+Condition = Literal["Clear", "Cloudy", "Fog", "Rain", "Snow", "Thunderstorm"]
+
+AiError = Literal[
+    "timeout",
+    "rate_limited",
+    "provider_error",
+    "auth_error",
+    "billing_error",
+    "network_error",
+    "invalid_json",
+    "out_of_range",
+    "not_configured",
+]
+
+Percent = Annotated[int, Field(ge=0, le=100)]
 
 
 class HourlyForecastItem(BaseModel):
-    time: str
+    time: str = Field(pattern=r"^\d{2}:\d{2}$")
     temperature: float
-    rain_probability: int
-    condition: str | None = None
+    rain_probability: Percent
+    condition: Condition | None = None
+
+
+class SourceForecast(BaseModel):
+    source: str
+    temperature: float
+    condition: Condition
+    humidity: Percent
+    wind_speed: float = Field(ge=0)
+    pressure: int
+    rain_probability: Percent
+    hourly: list[HourlyForecastItem]
+    utc_offset_seconds: int | None = None
 
 
 class WeatherSourceForecast(BaseModel):
@@ -26,34 +46,20 @@ class WeatherSourceForecast(BaseModel):
     confidence: int | None = None
 
 
-class SourceForecast(BaseModel):
-    source: str
-    temperature: float
-    condition: str
-    humidity: int
-    wind_speed: float
-    pressure: int
-    rain_probability: int
-    hourly: list[HourlyForecastItem]
-
-
 class WeatherResponse(BaseModel):
     city: str
     country: str | None = None
     temperature: float
-    condition: str
+    condition: Condition
     humidity: int
     wind_speed: float
     pressure: int
     rain_probability: int
     confidence: int | None
-    summary: str | None
+    trusted_sources: list[str] = []
+    reasoning: str | None = None
+    recommendations: list[str] = []
     hourly_forecast: list[HourlyForecastItem]
     sources: list[WeatherSourceForecast]
     ai_failed: bool = False
-    ai_error: str | None = None
-
-
-class ComparisonResponse(BaseModel):
-    city: str
-    sources: list[WeatherSourceForecast]
+    ai_error: AiError | None = None

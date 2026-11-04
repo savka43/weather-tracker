@@ -382,6 +382,20 @@
   font-size: 14px;
 }
 
+.ai-tips-title {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.ai-recommendations {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--text);
+  font-size: 14px;
+}
+
 .meter {
   height: 6px;
   border-radius: 999px;

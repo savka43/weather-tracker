@@ -4,7 +4,6 @@ backend
 .git
 .env
 .env.*
-!.env.example
 docs
 *.md
 Dockerfile

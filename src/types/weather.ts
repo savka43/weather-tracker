@@ -1,18 +1,21 @@
-export type WeatherBase = {
-    city: string
-    temperature: number
-    condition: string
-    humidity?: number | null
-    wind_speed?: number | null
-    pressure?: number | null
-    visibility?: number | null
-}
+export type Condition = 'Clear' | 'Cloudy' | 'Fog' | 'Rain' | 'Snow' | 'Thunderstorm'
+
+export type AiError =
+    | 'timeout'
+    | 'rate_limited'
+    | 'provider_error'
+    | 'auth_error'
+    | 'billing_error'
+    | 'network_error'
+    | 'invalid_json'
+    | 'out_of_range'
+    | 'not_configured'
 
 export type HourlyForecastItem = {
     time: string
     temperature: number
     rain_probability: number
-    condition?: string | null
+    condition?: Condition | null
 }
 
 export type WeatherSourceForecast = {
@@ -27,22 +30,19 @@ export type WeatherResponse = {
     city: string
     country?: string | null
     temperature: number
-    condition: string
+    condition: Condition
     humidity: number
     wind_speed: number
     pressure: number
     rain_probability: number
     confidence: number | null
-    summary: string | null
+    trusted_sources: string[]
+    reasoning: string | null
+    recommendations: string[]
     hourly_forecast: HourlyForecastItem[]
     sources: WeatherSourceForecast[]
     ai_failed: boolean
-    ai_error: string | null
-}
-
-export type ComparisonResponse = {
-    city: string
-    sources: WeatherSourceForecast[]
+    ai_error: AiError | null
 }
 
 export type Place = {
