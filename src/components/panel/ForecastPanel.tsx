@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, Droplets, Gauge, LoaderCircle, MousePointerClick, RotateCw, Sparkles, Umbrella, Wind } from 'lucide-react'
+import { ChevronDown, ChevronUp, Droplets, Gauge, Lightbulb, LoaderCircle, MousePointerClick, RotateCw, Sparkles, Umbrella, Wind } from 'lucide-react'
 import { useI18n } from '../../i18n/context'
+import { STATIC_MODE } from '../../services/weatherApi'
 import type { Place, WeatherResponse } from '../../types/weather'
 import { WeatherIcon } from '../weather/WeatherIcon'
 import { conditionKey, getHourlyWeatherType, getWeatherType } from '../weather/weatherType'
@@ -109,7 +110,18 @@ function ForecastTab({ weather }: { weather: WeatherResponse }) {
                 ))}
             </ul>
 
-            {weather.ai_failed ? (
+            {weather.ai_failed && STATIC_MODE ? (
+                weather.recommendations.length > 0 && (
+                    <section className="ai-card ai-card-off">
+                        <div className="ai-card-header">
+                            <span><Lightbulb size={16} aria-hidden /> {t('ai.recommendations')}</span>
+                        </div>
+                        <ul className="ai-recommendations">
+                            {weather.recommendations.map((item) => <li key={item}>{item}</li>)}
+                        </ul>
+                    </section>
+                )
+            ) : weather.ai_failed ? (
                 <section className="ai-card ai-card-off">
                     <div className="ai-card-header">
                         <span><Sparkles size={16} aria-hidden /> {t('ai.off')}</span>

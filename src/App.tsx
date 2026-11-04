@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { X } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import MapControls from './components/MapControls'
 import WeatherMap, { type FlyTarget, type LatLon } from './components/map/WeatherMap'
@@ -8,9 +9,11 @@ import { useTheme } from './hooks/useTheme'
 import { useI18n } from './i18n/context'
 import type { TranslationKey } from './i18n/translations'
 import { reverseGeocode } from './services/geocoding'
-import { getWeatherForPlace } from './services/weatherApi'
+import { getWeatherForPlace, STATIC_MODE } from './services/weatherApi'
 import type { Place, WeatherResponse } from './types/weather'
 import './App.css'
+
+const INTRO_KEY = 'intro-seen'
 
 function placeFromParams(params: URLSearchParams): Place | null {
     const lat = Number(params.get('lat'))
@@ -38,6 +41,17 @@ export default function App() {
     const [collapsed, setCollapsed] = useState(false)
     const [isLocating, setIsLocating] = useState(false)
     const [notice, setNotice] = useState<TranslationKey | null>(null)
+
+    const [intro, setIntro] = useState<'hidden' | 'shown' | 'leaving'>(() =>
+        STATIC_MODE && !localStorage.getItem(INTRO_KEY) ? 'shown' : 'hidden',
+    )
+
+    useEffect(() => {
+        if (intro !== 'shown') return
+        localStorage.setItem(INTRO_KEY, '1')
+        const timer = window.setTimeout(() => setIntro('leaving'), 6000)
+        return () => window.clearTimeout(timer)
+    }, [intro])
 
     const reverseRef = useRef<AbortController | null>(null)
     useEffect(() => {
@@ -139,6 +153,19 @@ export default function App() {
                     setReloadKey((key) => key + 1)
                 }}
             />
+
+            {intro !== 'hidden' && (
+                <div
+                    className={`intro-banner glass${intro === 'leaving' ? ' leaving' : ''}`}
+                    role="status"
+                    onAnimationEnd={() => intro === 'leaving' && setIntro('hidden')}
+                >
+                    <span>{t('intro.static')}</span>
+                    <button type="button" className="intro-close" aria-label={t('intro.close')} onClick={() => setIntro('leaving')}>
+                        <X size={16} aria-hidden />
+                    </button>
+                </div>
+            )}
 
             {notice && (
                 <div className="toast glass" role="status">
